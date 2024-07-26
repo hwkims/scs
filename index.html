@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>게임</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #cccccc;
+    }
+    #gameCanvas {
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <script>
+    // canvas 요소 가져오기
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 이미지 로드
+    const characterImage = new Image();
+    characterImage.src = 'character.png'; // 이미지 파일 경로
+
+// 캐릭터 객체
+class Character {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.velocityX = 0;
+    this.velocityY = 0;
+    this.accelerationX = 0;
+    this.accelerationY = 0;
+    this.friction = 0.5;
+    this.jumpForce = 50;
+    this.gravity = 1;
+    this.limbs = [
+      { x: x, y: y, radiusX: 20, radiusY: 5, offsetX: 10, offsetY: 10, angle: 0 },
+      { x: x, y: y, radiusX: 20, radiusY: 5, offsetX: -10, offsetY: 10, angle: 0 },
+      { x: x, y: y, radiusX: 10, radiusY: 10, offsetX: 0, offsetY: 20, angle: 0 },
+      { x: x, y: y, radiusX: 5, radiusY: 10, offsetX: 10, offsetY: 30, angle: 0 },
+      { x: x, y: y, radiusX: 5, radiusY: 10, offsetX: -10, offsetY: 30, angle: 0 },
+    ];
+    this.radius = 20;
+    this.angle = 0;
+  }
+  
+  update() {
+    // Update acceleration
+    this.accelerationX = (mouse.x - this.x) / 10;
+    this.accelerationY = (mouse.y - this.y) / 10;
+    
+    // Update velocity
+    this.velocityX += this.accelerationX;
+    this.velocityY += this.accelerationY;
+    
+    // Apply friction
+    this.velocityX *= this.friction;
+    this.velocityY *= this.friction;
+    
+    // Update position
+    this.x += this.velocityX;
+    this.y += this.velocityY;
+    
+    // Apply gravity
+    this.velocityY += this.gravity;
+    
+    // Update limbs
+    this.limbs.forEach((limb) => {
+      limb.x += (this.x + limb.offsetX - limb.x) * 0.2;
+      limb.y += (this.y + limb.offsetY - limb.y) * 0.2;
+      
+      // Calculate angle based on mouse position
+      const dx = mouse.x - limb.x;
+      const dy = mouse.y - limb.y;
+      limb.angle = Math.atan2(dy, dx);
+    });
+    
+    // Calculate head angle based on mouse position
+    const dx = mouse.x - this.x;
+    const dy = mouse.y - this.y;
+    this.angle = Math.atan2(dy, dx);
+  }
+  
+  draw() {
+  // 이미지 그리기
+  ctx.save();
+  ctx.translate(this.x, this.y);
+   ctx.rotate(this.angle);
+
+  ctx.drawImage(characterImage, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
+  ctx.restore();
+  
+  // 사지 그리기
+  ctx.globalCompositeOperation = 'destination-over';
+  this.limbs.forEach((limb) => {
+    ctx.fillStyle = '#67757e';
+    ctx.save();
+
+    ctx.translate(this.x + limb.offsetX, this.y + limb.offsetY);
+    ctx.rotate(this.angle);
+    ctx.beginPath();
+    ctx.ellipse(limb.radiusX, 0, limb.radiusX, limb.radiusY, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+);
+  
+  ctx.globalCompositeOperation = 'source-over';
+  
+}
+  
+  jump() {
+    this.velocityY = -this.jumpForce;
+  }
+}
+    // Circle 객체
+    class Circle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = Math.random() * 20 + 10;
+      }
+      
+      draw() {
+        const gradient = ctx.createRadialGradient(this.x - this.radius*0.5, this.y - this.radius*0.5, 0, this.x, this.y, this.radius*1.5);
+        gradient.addColorStop(0, '#fff');
+        gradient.addColorStop(1, '#9bad9f');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // 게임 초기화
+    let character = new Character(canvas.width / 2, canvas.height - 50);
+    let circles = [];
+    let mouse = { x: 0, y: 0 };
+    
+    // 이벤트 리스너
+    canvas.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+    
+    canvas.addEventListener('click', () => {
+      character.jump();
+    });
+    
+    // 게임 루프
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Update character
+      character.update();
+            // Draw character
+            character.draw();
+      
+      // Update circles
+      circles.forEach((circle) => {
+        circle.y += 1;
+      });
+      
+      // Draw circles
+      circles.forEach((circle) => {
+        circle.draw();
+      });
+      
+      // Detect collisions
+      circles.forEach((circle) => {
+        const distance = Math.sqrt((character.x - circle.x) ** 2 + (character.y - circle.y) ** 2);
+        if (distance < character.radius + circle.radius) {
+          // Handle collision
+          const angle = Math.atan2(character.y - circle.y, character.x - circle.x);
+          const newDistance = character.radius + circle.radius;
+          character.x = circle.x + Math.cos(angle) * newDistance;
+          character.y = circle.y + Math.sin(angle) * newDistance;
+        }
+        
+        character.limbs.forEach((limb) => {
+          const limbDistance = Math.sqrt((limb.x - circle.x) ** 2 + (limb.y - circle.y) ** 2);
+          if (limbDistance < limb.radiusX + circle.radius) {
+            // Handle collision
+            const angle = Math.atan2(limb.y - circle.y, limb.x - circle.x);
+            const newDistance = limb.radiusX + circle.radius;
+            limb.x = circle.x + Math.cos(angle) * newDistance;
+            limb.y = circle.y + Math.sin(angle) * newDistance;
+          }
+        });
+      });
+      
+      // 랜덤으로 동글한 원 생성
+      if (Math.random() < 0.2) {
+        circles.push(new Circle(Math.random() * canvas.width, 0));
+      }
+      
+      requestAnimationFrame(gameLoop);
+    }
+    
+    gameLoop();
+  </script>
+</body>
+</html>
+     
