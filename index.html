@@ -12,6 +12,7 @@
     }
     #gameCanvas {
       border: 1px solid #ddd;
+      transform: rotate(180deg);
     }
   </style>
 </head>
@@ -36,17 +37,17 @@ class Character {
     this.accelerationX = 0;
     this.accelerationY = 0;
     this.friction = 0.5;
-    this.jumpForce = 50;
+    this.jumpForce = 100;
     this.gravity = 1;
     this.limbs = [
-      { x: x, y: y, radiusX: 20, radiusY: 5, offsetX: 10, offsetY: 10, angle: 0 },
-      { x: x, y: y, radiusX: 20, radiusY: 5, offsetX: -10, offsetY: 10, angle: 0 },
-      { x: x, y: y, radiusX: 10, radiusY: 10, offsetX: 0, offsetY: 20, angle: 0 },
-      { x: x, y: y, radiusX: 5, radiusY: 10, offsetX: 10, offsetY: 30, angle: 0 },
-      { x: x, y: y, radiusX: 5, radiusY: 10, offsetX: -10, offsetY: 30, angle: 0 },
+      { x: x, y: y, radiusX: 30, radiusY: 5, offsetX: 10, offsetY: 0, angle: 0 },
+      { x: x, y: y, radiusX: 30, radiusY: 5, offsetX: -10, offsetY: 0, angle: 0 },
+      { x: x, y: y, radiusX: 20, radiusY: 10, offsetX: 0, offsetY: 0, angle: 0 },
+      { x: x, y: y, radiusX: 5, radiusY: 40, offsetX: 0, offsetY: 0, angle: 0 },
+      // { x: x, y: y, radiusX: 5, radiusY: 30, offsetX: -10, offsetY: 0, angle: 0 },
     ];
     this.radius = 20;
-    this.angle = 0;
+    this.angle = 90;
   }
   
   update() {
@@ -90,7 +91,7 @@ class Character {
   // 이미지 그리기
   ctx.save();
   ctx.translate(this.x, this.y);
-   ctx.rotate(this.angle);
+   ctx.rotate(this.angle-1.2);
 
   ctx.drawImage(characterImage, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
   ctx.restore();
@@ -116,7 +117,7 @@ class Character {
 }
   
   jump() {
-    this.velocityY = -this.jumpForce;
+    this.velocityY = this.jumpForce;
   }
 }
     // Circle 객체
@@ -145,8 +146,11 @@ class Character {
     
     // 이벤트 리스너
     canvas.addEventListener('mousemove', (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
+      const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  mouse.x = canvas.width - x; // transform x coordinate
+  mouse.y = canvas.height - y; // transform y coordinate
     });
     
     canvas.addEventListener('click', () => {
